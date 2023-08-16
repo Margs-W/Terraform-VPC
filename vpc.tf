@@ -87,14 +87,22 @@ resource "aws_route" "Prod-igw-association" {
   gateway_id                = aws_internet_gateway.Prod-igw.id
   destination_cidr_block    = "0.0.0.0/0"
 }
-#NAT Gateway
-resource "aws_nat_gateway" "Prod-Nat-gateway" {
-  connectivity_type = "private"
-  subnet_id         = aws_subnet.Prod-priv-sub1.id
+#Allocation of Elastic IP
+resource "aws_eip" "Prod-EIP" {
+
 }
-#Nat Gateway Route
-resource "aws_nat_gateway" "Prod-Nat-association" {
-  connectivity_type                  = "private"
-  subnet_id                          = aws_subnet.Prod-priv-sub1.id
-  secondary_private_ip_address_count = 7
+#NAT Gateway
+resource "aws_nat_gateway" "Prod-NGW" {
+allocation_id = aws_eip.Prod-EIP.id
+subnet_id     = aws_subnet.Prod-pub-sub1.id
+
+tags = {
+  Name = "Prod-NGW"
+}
+}
+#Associating NAT gateway to private route
+resource "aws_route" "Prod-NGW" {
+route_table_id        = aws_route_table.Prod-priv-route-table.id
+destination_cidr_block = "0.0.0.0/0"
+gateway_id            = aws_nat_gateway.Prod-NGW.id
 }
